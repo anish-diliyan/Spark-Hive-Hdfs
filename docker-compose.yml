@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  name_node:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: name_node
+    restart: always
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - hadoop_name_node:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  data_node_one:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: data_node_one
+    restart: always
+    volumes:
+      - hadoop_data_node_one:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "name_node:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  data_node_two:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: data_node_two
+    restart: always
+    volumes:
+      - hadoop_data_node_two:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "name_node:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  resource_manager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resource_manager
+    restart: always
+    ports:
+      - "8088:8088"
+    environment:
+      SERVICE_PRECONDITION: "name_node:9000 name_node:9870 data_node_one:9864 data_node_two:9864"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  node_manager:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: node_manager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "name_node:9000 name_node:9870 data_node_one:9864 data_node_two:9864 resource_manager:8088"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  spark_master:
+    image: bde2020/spark-master:3.3.0-hadoop3.3
+    container_name: spark_master
+    restart: always
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+      - CORE_CONF_fs_defaultFS=hdfs://name_node:9000
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  spark_worker-one:
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
+    container_name: spark_worker-one
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - SPARK_MASTER=spark://spark_master:7077
+      - CORE_CONF_fs_defaultFS=hdfs://name_node:9000
+    depends_on:
+      - spark_master
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  spark_worker_two:
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
+    container_name: spark_worker_two
+    restart: always
+    ports:
+      - "8082:8081"
+    environment:
+      - SPARK_MASTER=spark://spark_master:7077
+      - CORE_CONF_fs_defaultFS=hdfs://name_node:9000
+    depends_on:
+      - spark_master
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  history_server:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: history_server
+    restart: always
+    ports:
+      - "8188:8188"
+    environment:
+      SERVICE_PRECONDITION: "name_node:9000 name_node:9870 data_node_one:9864 data_node_two:9864 resource_manager:8088"
+    volumes:
+      - hadoop_history_server:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  hive_server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive_server
+    restart: always
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive_metastore_postgresql/metastore"
+      SERVICE_PRECONDITION: "hive_metastore:9083"
+    depends_on:
+      - hive_metastore
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  hive_metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive_metastore
+    restart: always
+    ports:
+      - "9083:9083"
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "name_node:9870 data_node_one:9864 data_node_two:9864 hive_metastore_postgresql:5432"
+    depends_on:
+      - hive_metastore_postgresql
+      - name_node
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hdfs-hive-net
+
+  hive_metastore_postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    container_name: hive_metastore_postgresql
+    restart: always
+    volumes:
+      - hive_postgresql:/var/lib/postgresql/data
+    networks:
+      - hdfs-hive-net
+
+volumes:
+  hadoop_name_node:
+  hadoop_data_node_one:
+  hadoop_data_node_two:
+  hadoop_history_server:
+  hive_postgresql:
+
+networks:
+  hdfs-hive-net:
+    driver: bridge
