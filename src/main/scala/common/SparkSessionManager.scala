@@ -1,18 +1,16 @@
-package com.bigdata.base
+package common
 
+import org.apache.spark.sql.SparkSession
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
-import org.apache.spark.sql.SparkSession
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-abstract class BaseSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll with LazyLogging {
+object SparkSessionManager extends LazyLogging {
   
-  protected val config: Config = ConfigFactory.load()
-  protected var spark: SparkSession = _
+  private val config: Config = ConfigFactory.load()
   
-  protected def createSparkSession(appName: String, enableHive: Boolean = false): SparkSession = {
+  def createSparkSession(appName: String, enableHive: Boolean = true): SparkSession = {
+    logger.info(s"Creating Spark session for: $appName")
+    
     val builder = SparkSession.builder()
       .appName(appName)
       .master(config.getString("spark.master"))
@@ -27,7 +25,7 @@ abstract class BaseSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     builder.getOrCreate()
   }
   
-  override def afterAll(): Unit = {
+  def stopSparkSession(spark: SparkSession): Unit = {
     if (spark != null) {
       logger.info("Stopping Spark session")
       spark.stop()

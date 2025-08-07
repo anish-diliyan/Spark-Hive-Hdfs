@@ -9,6 +9,12 @@ assembly / assemblyMergeStrategy := {
   case x => MergeStrategy.first
 }
 
+// Code coverage settings (disabled for assembly)
+coverageEnabled := false
+coverageMinimumStmtTotal := 80
+coverageFailOnMinimum := true
+coverageExcludedPackages := ".*Main.*;.*App.*"
+
 scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlint")
 
 Test / parallelExecution := false

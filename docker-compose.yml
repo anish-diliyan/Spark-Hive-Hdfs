@@ -13,7 +13,7 @@ services:
     environment:
       - CLUSTER_NAME=test
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -26,7 +26,7 @@ services:
     environment:
       SERVICE_PRECONDITION: "name_node:9870"
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -39,7 +39,7 @@ services:
     environment:
       SERVICE_PRECONDITION: "name_node:9870"
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -52,7 +52,7 @@ services:
     environment:
       SERVICE_PRECONDITION: "name_node:9000 name_node:9870 data_node_one:9864 data_node_two:9864"
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -63,7 +63,7 @@ services:
     environment:
       SERVICE_PRECONDITION: "name_node:9000 name_node:9870 data_node_one:9864 data_node_two:9864 resource_manager:8088"
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -78,7 +78,7 @@ services:
       - INIT_DAEMON_STEP=setup_spark
       - CORE_CONF_fs_defaultFS=hdfs://name_node:9000
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -94,7 +94,7 @@ services:
     depends_on:
       - spark_master
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -110,7 +110,7 @@ services:
     depends_on:
       - spark_master
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -125,7 +125,7 @@ services:
     volumes:
       - hadoop_history_server:/hadoop/yarn/timeline
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -142,7 +142,7 @@ services:
     depends_on:
       - hive_metastore
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
@@ -159,7 +159,7 @@ services:
       - hive_metastore_postgresql
       - name_node
     env_file:
-      - ./hadoop.env
+      - ./docker-compose.env
     networks:
       - hdfs-hive-net
 
