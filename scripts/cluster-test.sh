@@ -52,7 +52,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 # Change to project root
-cd "$PROJECT_ROOT"
+cd "$PROJECT_ROOT" || exit
 echo "Working from: $(pwd)"
 
 # Build JAR if needed
