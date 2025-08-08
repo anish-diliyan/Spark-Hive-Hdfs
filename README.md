@@ -230,6 +230,64 @@ The task provides detailed information including:
 
 <div align="center">
 
+### 📦 HDFS Small File Compaction Task
+
+</div>
+
+The HDFS small file compaction task addresses the small file problem in HDFS by merging multiple small files into larger, more efficient files to improve cluster performance and reduce NameNode memory overhead.
+
+#### 🎯 Purpose
+- **Performance Optimization**: Reduces NameNode memory usage by decreasing file count
+- **Storage Efficiency**: Improves HDFS block utilization and reduces metadata overhead
+- **Query Performance**: Enhances MapReduce and Spark job performance by reducing task overhead
+- **Cluster Health**: Maintains optimal HDFS performance by managing file fragmentation
+
+#### 💻 Usage
+```bash
+  # Analyze small files in a directory (dry run)
+  ./scripts/small-file-compaction.sh --input-path /data/logs --dry-run true
+
+  # Compact small files with default settings
+  ./scripts/small-file-compaction.sh --input-path /data/logs --output-path /data/compacted
+
+  # Compact with custom file size threshold
+  ./scripts/small-file-compaction.sh --input-path /data/events --threshold-mb 64 --target-size-mb 256
+
+  # Get help and see all options
+  ./scripts/small-file-compaction.sh --help
+```
+
+#### 🔧 Compaction Modes
+- **`analyze`**: Scans directories to identify small file issues without modification
+- **`compact`**: Merges small files into larger files based on specified criteria
+- **`partition-aware`**: Maintains partition structure while compacting files within partitions
+
+#### ⚙️ Parameters
+- **`--input-path`**: HDFS directory path containing small files to compact
+- **`--output-path`**: Target directory for compacted files (optional, defaults to input path)
+- **`--threshold-mb`**: File size threshold in MB to consider as "small" (default: 32MB)
+- **`--target-size-mb`**: Target size for compacted files in MB (default: 128MB)
+- **`--dry-run`**: Preview mode to analyze without actual compaction (true/false)
+- **`--help`**: Displays usage information and available options
+
+#### 🔍 Analysis Features
+- **File Size Distribution**: Shows histogram of file sizes in the target directory
+- **Impact Assessment**: Calculates potential memory savings and performance improvements
+- **Partition Detection**: Automatically identifies partitioned data structures
+- **Compression Analysis**: Evaluates current compression ratios and recommendations
+
+#### 📄 Output
+The task provides comprehensive reporting including:
+- Number of small files identified and processed
+- Before/after file count and size statistics
+- NameNode memory savings achieved
+- Processing time and throughput metrics
+- Recommendations for optimal file organization
+
+---
+
+<div align="center">
+
 **Built with ❤️ for the Big Data community**
 
 </div>
