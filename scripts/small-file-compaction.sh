@@ -114,4 +114,4 @@ fi
 echo ""
 
 # Execute the command
-eval $SPARK_SUBMIT_CMD
+eval "$SPARK_SUBMIT_CMD"

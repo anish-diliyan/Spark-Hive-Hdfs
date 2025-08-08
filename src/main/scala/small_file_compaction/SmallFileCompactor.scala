@@ -21,14 +21,14 @@ class SmallFileCompactor(spark: SparkSession) {
     val totalSize = files.map(_.getLen).sum
     val smallFilesSize = smallFiles.map(_.getLen).sum
     
-    println(s"=== Small File Analysis Report ===")
-    println(s"Total files: $totalFiles")
-    println(s"Small files (< ${config.thresholdMB}MB): ${smallFiles.length}")
-    println(s"Small files percentage: ${(smallFiles.length.toDouble / totalFiles * 100).formatted("%.2f")}%")
-    println(s"Total size: ${FileUtils.formatBytes(totalSize)}")
-    println(s"Small files size: ${FileUtils.formatBytes(smallFilesSize)}")
-    println(s"Potential compacted files: ${Math.ceil(smallFilesSize.toDouble / (config.targetSizeMB * 1024 * 1024)).toInt}")
-    println(s"NameNode memory savings: ${smallFiles.length - Math.ceil(smallFilesSize.toDouble / (config.targetSizeMB * 1024 * 1024)).toInt} file objects")
+    logger.info("=== Small File Analysis Report ===")
+    logger.info(s"Total files: $totalFiles")
+    logger.info(s"Small files (< ${config.thresholdMB}MB): ${smallFiles.length}")
+    logger.info(s"Small files percentage: ${(smallFiles.length.toDouble / totalFiles * 100).formatted("%.2f")}%")
+    logger.info(s"Total size: ${FileUtils.formatBytes(totalSize)}")
+    logger.info(s"Small files size: ${FileUtils.formatBytes(smallFilesSize)}")
+    logger.info(s"Potential compacted files: ${Math.ceil(smallFilesSize.toDouble / (config.targetSizeMB * 1024 * 1024)).toInt}")
+    logger.info(s"NameNode memory savings: ${smallFiles.length - Math.ceil(smallFilesSize.toDouble / (config.targetSizeMB * 1024 * 1024)).toInt} file objects")
   }
   
   def compactFiles(config: CompactionConfig): Unit = {

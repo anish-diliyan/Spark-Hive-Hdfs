@@ -16,7 +16,7 @@ object ArgumentParser {
     val argMap = ArgumentUtils.parseArgs(args)
     
     if (argMap.contains("help")) {
-      ArgumentUtils.printUsageAndExit(getUsage())
+      ArgumentUtils.printUsageAndExit(getUsage)
     }
     
     val inputPath = ArgumentUtils.getArgOrExit(argMap, "input-path", "--input-path is required")
@@ -32,7 +32,7 @@ object ArgumentParser {
     )
   }
   
-  private def getUsage(): String = {
+  private def getUsage: String = {
     """
 Usage: SmallFileCompactionTask [options]
 
