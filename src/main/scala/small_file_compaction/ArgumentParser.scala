@@ -1,5 +1,7 @@
 package small_file_compaction
 
+import common.ArgumentUtils
+
 case class CompactionConfig(
   inputPath: String = "",
   outputPath: Option[String] = None,
@@ -11,29 +13,27 @@ case class CompactionConfig(
 
 object ArgumentParser {
   def parseArgs(args: Array[String]): CompactionConfig = {
-    var config = CompactionConfig()
+    val argMap = ArgumentUtils.parseArgs(args)
     
-    args.sliding(2, 2).foreach {
-      case Array("--input-path", value) => config = config.copy(inputPath = value)
-      case Array("--output-path", value) => config = config.copy(outputPath = Some(value))
-      case Array("--threshold-mb", value) => config = config.copy(thresholdMB = value.toInt)
-      case Array("--target-size-mb", value) => config = config.copy(targetSizeMB = value.toInt)
-      case Array("--dry-run", value) => config = config.copy(dryRun = value.toBoolean, mode = "analyze")
-      case Array("--help", _) => printUsage(); sys.exit(0)
-      case _ =>
+    if (argMap.contains("help")) {
+      ArgumentUtils.printUsageAndExit(getUsage())
     }
     
-    if (config.inputPath.isEmpty) {
-      println("Error: --input-path is required")
-      printUsage()
-      sys.exit(1)
-    }
+    val inputPath = ArgumentUtils.getArgOrExit(argMap, "input-path", "--input-path is required")
+    val dryRun = ArgumentUtils.getArgOrDefault(argMap, "dry-run", "false").toBoolean
     
-    config
+    CompactionConfig(
+      inputPath = inputPath,
+      outputPath = argMap.get("output-path"),
+      thresholdMB = ArgumentUtils.getArgOrDefault(argMap, "threshold-mb", "32").toInt,
+      targetSizeMB = ArgumentUtils.getArgOrDefault(argMap, "target-size-mb", "128").toInt,
+      dryRun = dryRun,
+      mode = if (dryRun) "analyze" else "compact"
+    )
   }
   
-  private def printUsage(): Unit = {
-    println("""
+  private def getUsage(): String = {
+    """
 Usage: SmallFileCompactionTask [options]
 
 Options:
@@ -43,6 +43,6 @@ Options:
   --target-size-mb <size>  Target size for compacted files in MB (default: 128)
   --dry-run <true/false>   Preview mode to analyze without actual compaction
   --help                   Show this help message
-    """)
+    """
   }
 }

@@ -1,7 +1,7 @@
 package cluster_test
 
 import com.typesafe.scalalogging.LazyLogging
-import common.SparkSessionManager
+import common.{SparkSessionManager, ArgumentUtils}
 import org.apache.spark.sql.SparkSession
 
 object ClusterTestTask extends App with LazyLogging {
@@ -16,11 +16,11 @@ object ClusterTestTask extends App with LazyLogging {
   val spark = SparkSessionManager.createSparkSession("Cluster-Test-Task")
   
   try {
-    val argMap = parseArgs(args)
+    val argMap = ArgumentUtils.parseArgs(args)
     
-    val testType = getArgOrDefault(argMap, "test-type", "all")
-    val recordCount = getArgOrDefault(argMap, "record-count", "10000").toInt
-    val verbose = getArgOrDefault(argMap, "verbose", "false").toBoolean
+    val testType = ArgumentUtils.getArgOrDefault(argMap, "test-type", "all")
+    val recordCount = ArgumentUtils.getArgOrDefault(argMap, "record-count", "10000").toInt
+    val verbose = ArgumentUtils.getArgOrDefault(argMap, "verbose", "false").toBoolean
     
     logger.info("=== Cluster Test Task ===")
     logger.info(s"Test Type: $testType")
@@ -62,13 +62,5 @@ object ClusterTestTask extends App with LazyLogging {
     logger.info("🎉 All cluster tests PASSED!")
   }
   
-  private def parseArgs(args: Array[String]): Map[String, String] = {
-    args.grouped(2).collect {
-      case Array(key, value) if key.startsWith("--") => key.substring(2) -> value
-    }.toMap
-  }
-  
-  private def getArgOrDefault(args: Map[String, String], key: String, default: String): String = {
-    args.getOrElse(key, default)
-  }
+
 }

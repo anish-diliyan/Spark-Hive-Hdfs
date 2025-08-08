@@ -1,19 +1,19 @@
 package small_file_compaction
 
 import org.apache.spark.sql.SparkSession
-import org.apache.hadoop.fs.{FileSystem, Path, FileStatus}
+import org.apache.hadoop.fs.{Path, FileStatus}
 import org.slf4j.LoggerFactory
 import scala.collection.mutable.ArrayBuffer
+import common.FileUtils
 
 class SmallFileCompactor(spark: SparkSession) {
   private val logger = LoggerFactory.getLogger(getClass)
-  private val hadoopConf = spark.sparkContext.hadoopConfiguration
-  private val fs = FileSystem.get(hadoopConf)
+  private val fs = FileUtils.getFileSystem(spark)
   
   def analyzeDirectory(config: CompactionConfig): Unit = {
     logger.info(s"Analyzing directory: ${config.inputPath}")
     
-    val files = listFiles(new Path(config.inputPath))
+    val files = FileUtils.listFiles(fs, new Path(config.inputPath))
     val thresholdBytes = config.thresholdMB * 1024 * 1024L
     
     val smallFiles = files.filter(_.getLen < thresholdBytes)
@@ -25,8 +25,8 @@ class SmallFileCompactor(spark: SparkSession) {
     println(s"Total files: $totalFiles")
     println(s"Small files (< ${config.thresholdMB}MB): ${smallFiles.length}")
     println(s"Small files percentage: ${(smallFiles.length.toDouble / totalFiles * 100).formatted("%.2f")}%")
-    println(s"Total size: ${formatBytes(totalSize)}")
-    println(s"Small files size: ${formatBytes(smallFilesSize)}")
+    println(s"Total size: ${FileUtils.formatBytes(totalSize)}")
+    println(s"Small files size: ${FileUtils.formatBytes(smallFilesSize)}")
     println(s"Potential compacted files: ${Math.ceil(smallFilesSize.toDouble / (config.targetSizeMB * 1024 * 1024)).toInt}")
     println(s"NameNode memory savings: ${smallFiles.length - Math.ceil(smallFilesSize.toDouble / (config.targetSizeMB * 1024 * 1024)).toInt} file objects")
   }
@@ -34,7 +34,7 @@ class SmallFileCompactor(spark: SparkSession) {
   def compactFiles(config: CompactionConfig): Unit = {
     logger.info(s"Starting file compaction for: ${config.inputPath}")
     
-    val files = listFiles(new Path(config.inputPath))
+    val files = FileUtils.listFiles(fs, new Path(config.inputPath))
     val thresholdBytes = config.thresholdMB * 1024 * 1024L
     val targetBytes = config.targetSizeMB * 1024 * 1024L
     
@@ -56,24 +56,6 @@ class SmallFileCompactor(spark: SparkSession) {
     }
     
     logger.info("File compaction completed successfully")
-  }
-  
-  private def listFiles(path: Path): Array[FileStatus] = {
-    val files = ArrayBuffer[FileStatus]()
-    
-    def traverse(currentPath: Path): Unit = {
-      val status = fs.listStatus(currentPath)
-      status.foreach { fileStatus =>
-        if (fileStatus.isFile) {
-          files += fileStatus
-        } else if (fileStatus.isDirectory) {
-          traverse(fileStatus.getPath)
-        }
-      }
-    }
-    
-    traverse(path)
-    files.toArray
   }
   
   private def groupFilesBySize(files: Array[FileStatus], targetSize: Long): Array[Array[FileStatus]] = {
@@ -105,18 +87,5 @@ class SmallFileCompactor(spark: SparkSession) {
     df.coalesce(1).write.mode("overwrite").text(outputPath)
     
     logger.info(s"Compacted ${files.length} files into $outputPath")
-  }
-  
-  private def formatBytes(bytes: Long): String = {
-    val units = Array("B", "KB", "MB", "GB", "TB")
-    var size = bytes.toDouble
-    var unitIndex = 0
-    
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024
-      unitIndex += 1
-    }
-    
-    f"$size%.2f ${units(unitIndex)}"
   }
 }
