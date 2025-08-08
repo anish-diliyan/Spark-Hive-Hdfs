@@ -16,6 +16,7 @@
 4. [Web Interfaces](#web-interfaces)
 5. [Docker Services](#docker-services)
 6. [Configuration](#configuration)
+7. [Tasks](#tasks)
 
 ---
 
@@ -70,6 +71,7 @@ Ensure the following software is installed:
   # Build deployment JAR
   sbt assembly
 ```
+
 ---
 
 ## 🌐 Web Interfaces
@@ -119,6 +121,110 @@ Once the cluster is running, access these interfaces:
 ### Docker Configuration
 - **Services**: `docker-compose.yml`
 - **Environment**: `docker-compose.env`
+
+---
+
+<div align="center">
+
+### ✅ Cluster Test Task
+
+</div>
+
+The cluster test task validates all components of the big data ecosystem by running comprehensive tests across HDFS, Spark, and Hive services.
+
+#### 🎯 Purpose
+- **Component Validation**: Tests HDFS file operations, Spark job execution, and Hive query processing
+- **Data Pipeline Testing**: Validates end-to-end data flow from ingestion to processing
+- **Performance Benchmarking**: Measures cluster performance with configurable data volumes
+- **Health Monitoring**: Ensures all services are properly configured and communicating
+
+#### 💻 Usage
+```bash
+  # Test all components with default settings
+  ./scripts/cluster-test.sh --test-type all --record-count 1000
+
+  # Test specific component
+  ./scripts/cluster-test.sh --test-type spark --record-count 500
+  ./scripts/cluster-test.sh --test-type hdfs --record-count 100
+  ./scripts/cluster-test.sh --test-type hive --record-count 200
+
+  # Get help and see all options
+  ./scripts/cluster-test.sh --help
+```
+
+#### 📋 Test Types
+- **`all`**: Runs comprehensive tests on all cluster components
+- **`hdfs`**: Tests HDFS file operations (create, read, write, delete)
+- **`spark`**: Tests Spark job submission and execution
+- **`hive`**: Tests Hive table operations and SQL queries
+
+#### ⚙️ Parameters
+- **`--test-type`**: Specifies which components to test (all, hdfs, spark, hive)
+- **`--record-count`**: Number of test records to generate (default: 1000)
+- **`--help`**: Displays usage information and available options
+
+#### 📄 Output
+The task generates detailed logs showing:
+- Test execution status for each component
+- Performance metrics (execution time, throughput)
+- Error details if any component fails
+- Summary report with pass/fail status
+
+---
+
+<div align="center">
+
+### 🧹 Partition Cleanup Task
+
+</div>
+
+The partition cleanup task provides automated management of Hive table partitions, enabling efficient removal of old or obsolete data partitions to optimize storage and query performance.
+
+#### 🎯 Purpose
+- **Storage Optimization**: Removes old partitions to free up disk space
+- **Performance Enhancement**: Reduces metadata overhead for faster query execution
+- **Data Lifecycle Management**: Implements retention policies for time-based data
+- **Automated Maintenance**: Provides scheduled cleanup capabilities
+
+#### 💻 Usage
+```bash
+  # Dry run (preview what will be deleted)
+  ./scripts/partition-cleanup.sh --table sales_data --cutoff-year 2023 --dry-run true
+
+  # Actual cleanup (remove partitions older than 2023)
+  ./scripts/partition-cleanup.sh --table sales_data --cutoff-year 2023 --dry-run false
+
+  # Cleanup with custom retention period
+  ./scripts/partition-cleanup.sh --table user_events --cutoff-days 90 --dry-run false
+
+  # Get help and see all options
+  ./scripts/partition-cleanup.sh --help
+```
+
+#### 🔄 Cleanup Modes
+- **`dry-run`**: Preview mode that shows which partitions would be deleted without actual removal
+- **`execute`**: Performs actual partition deletion based on specified criteria
+- **`batch`**: Processes multiple tables using configuration file
+
+#### ⚙️ Parameters
+- **`--table`**: Target Hive table name for partition cleanup
+- **`--cutoff-year`**: Remove partitions older than specified year
+- **`--cutoff-days`**: Remove partitions older than specified number of days
+- **`--dry-run`**: Enable preview mode (true/false)
+- **`--help`**: Displays usage information and available options
+
+#### 🔒 Safety Features
+- **Preview Mode**: Always test with dry-run before actual execution
+- **Backup Verification**: Ensures data backup exists before deletion
+- **Rollback Support**: Maintains metadata for potential partition recovery
+- **Logging**: Comprehensive audit trail of all cleanup operations
+
+#### 📄 Output
+The task provides detailed information including:
+- List of partitions identified for cleanup
+- Storage space that will be freed
+- Execution status and any errors encountered
+- Summary statistics of cleanup operation
 
 ---
 
